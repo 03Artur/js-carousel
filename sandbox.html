@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <link rel="stylesheet" href="./assets/styles/main.css">
+</head>
+<body style="background-color: black;">
+<div id="root"></div>
+
+<script>
+
+  const root = document.getElementById('root');
+
+  const render = (elem) => {
+    root.innerHTML = '';
+    root.appendChild(elem);
+  };
+
+  class Component extends EventTarget {
+    constructor(props) {
+      super();
+      this.props = props;
+      this.state = null;
+    }
+
+    setState(values) {
+      this.state = Object.assign(this.state, values);
+      this._init();
+    }
+
+    render() {
+      throw new Error('');
+    }
+
+    _init() {
+      const result = this.render();
+      const rerenderEvent = new CustomEvent('rerender', {
+        detail: {
+          result,
+        },
+      });
+      this.dispatchEvent(rerenderEvent);
+    }
+  }
+
+  class Spinner extends Component {
+    render() {
+      const divElem = document.createElement('div');
+      divElem.classList.add('loader');
+      return divElem;
+    }
+  }
+
+  class SlideImage extends Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        loaded: false,
+        error: null,
+      };
+      this.loadImage();
+    }
+
+    loadImage = () => {
+      const { src } = this.props;
+      this.imgLoader = new Image();
+      this.imgLoader.addEventListener('load', () => {
+        this.setState({
+          loaded: true,
+        });
+      });
+      this.imgLoader.addEventListener('error', () => {
+        this.setState({
+          error: true,
+        });
+      });
+      this.imgLoader.setAttribute('src', src);
+    };
+
+    render() {
+      const { src } = this.props;
+      const { loaded, error } = this.state;
+
+      if (error) {
+        return alert('Error');
+      }
+
+      if (loaded) {
+        const imgElem = document.createElement('img');
+        imgElem.setAttribute('src', src);
+        return imgElem;
+      }
+
+      return new Spinner({}).render();
+    }
+  }
+
+
+  const imageComponent = new SlideImage({ src: 'https://www.wallpapertip.com/wmimgs/159-1596355_ultra-hd-wallpapers-1080p-58-images-dodowallpaper-4k.jpg' });
+  imageComponent.addEventListener('rerender', ({
+                                                 detail: {
+                                                   result,
+                                                 },
+                                               }) => {
+    render(result);
+  });
+  imageComponent._init();
+
+</script>
+</body>
+</html>
